@@ -1,6 +1,5 @@
 
-// const PORT = 3000;
-
+const PORT = process.env.PORT || 3146;
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./data/auth.db');
@@ -73,7 +72,7 @@ app.get('/members',verifyToken,(req,res)=>{
 })
 
 
-app.listen(process.env.PORT,()=>{console.log(`Server running on port ${PORT}`)});
+app.listen(PORT,()=>{console.log(`Server running on port ${PORT}`)});
 
 async function getUserByEmail(email) {
     let promise = new Promise((resolve,reject)=>{
