@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=Kdam+Thmor+Pro&display=swap');
+
+:root {
+    font-family: 'Kdam Thmor Pro', sans-serif;
+}
+
+body {
+    background-color: #222;
+    color: whitesmoke;
+}
+
+
+.navBar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    width: 100%;
+    margin: 0;
+    margin-top: 2rem;
+    padding: 0;
+}
+
+.navLink {
+    cursor: pointer;
+    width: 5rem;
+    font-size: 0.8rem;
+    color: #9e9ed6;
+}
+
+.navLink:hover {
+    color: #d6a69e;
+}
+
+.loginForm  {
+    display: grid;
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+    background-color: #333;
+    box-shadow: 4px 4px 10px 2px #111;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-top: auto;
+    align-self: center;
+    top: 50%;
+    left:50%;
+    transform: translate(-50%, -50%);
+}
+
+.loginForm div {
+    position: relative;
+}
+
+.loginForm input:not([type="submit"]) {
+    font-family: inherit;
+    font-size: 0.9rem;
+    display: block;
+    width: 30rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    border:none;
+    padding: 0.2rem 0.4rem;
+    margin-block: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.loginForm input:not([type="submit"]) ~ label { 
+    color: #AAA;
+    position: absolute;
+    top:0.85rem;
+    left: 1.1rem;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.loginForm input:not([type="submit"]):focus {
+    background-color: #DDF;
+    transition: all 0.2s ease;
+} 
+
+.loginForm input:not([type="submit"]):focus ~ label  { 
+    color: white;
+    position: absolute;
+    top:0.85rem;
+    left: 1.1rem;
+    display: inline-block;
+    transition: all 0.5s ease;
+}
+
+.loginForm input[type="submit"] {
+    display: block;
+    appearance: none;
+    border:none;
+    width: 6rem;
+    height: 2.5rem;
+    margin-left: auto;
+    margin-block: 0.5rem;    
+    color: black;
+    font-family: inherit;
+    border-radius: 0.5rem;
+    padding: 0.2rem 0.4rem;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+
+.loginForm input[type="submit"]:hover {
+    background-color: #DDF;
+    color: black;
+}
+
+.loginForm input[type="submit"]:disabled {
+    background-color: #555;
+    color: black;
+}
+.loginForm input[type="submit"]:disabled:hover {
+    background-color: #555;
+    color: black;
+}
+
+.filled  {
+    opacity: 0;
+}
+
+.emailInUse {
+    display: block;
+    outline: 3px solid tomato;
+}
+
+.emailNotInUse {
+    display: block;
+    outline: 3px solid greenyellow;
+}
+
+#messageArea {
+    position: absolute;
+    top: calc(50% + 15rem);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.8rem;
+    padding: 0.3rem;
+    color: tomato;
+    list-style: circle;
+    
+}
+

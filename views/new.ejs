@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=100vw, initial-scale=1.0">
+    <link rel="stylesheet" href="auth.css">
+    <script src="new.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    <%- include('_header.ejs') %>
+    <div class="top"> </div>
+    <form method="post" action="/create">
+        <div class="loginForm">
+            <div style="margin-bottom: 1rem">Create new user</div>
+            <div>
+                <input type="text" name="email" id="email" alt="User Name" required>
+                <label for="username">Email</label>
+            </div>
+    
+            <div>
+                <input type="password" name="password" id="password" required>
+                <label for="password">Password</label>
+            </div>
+    
+            <div>
+                <input type="password" name="password2" id="password2" required>
+                <label for="password2">Password (repeat)</label>
+            </div>
+
+            <div>
+                <input type="text" name="displayName" id="displayName" required>
+                <label for="displayName">Display Name</label>
+            </div>
+
+            <div>
+                <input id="submit" type="submit" value="Create">    
+            </div>
+        </div>
+    </form>
+    <div id="messageArea"></div>
+</body>
+</html>
