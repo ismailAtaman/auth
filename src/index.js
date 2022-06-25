@@ -17,6 +17,9 @@ db.all('SELECT * FROM tokens',(err,res)=>{
     REFRESH_TOKEN = res.find(e=> e.tokenType=='refresh').token;
 });
 
+app.get('/',(req,res)=>{
+    res.redirect(301,'/members')
+})
 
 
 app.get('/new',(req,res)=>{
@@ -68,7 +71,9 @@ app.post('/auth',(req,res)=>{
 })
 
 app.get('/members',verifyToken,(req,res)=>{
-    if (req.valid) res.status(200).send(req.user).end(); else res.status(401).end()
+    if (!req.valid) { res.status(401).redirect(301,'/new'); return 0;}
+    res.render('members', {user: req.user})
+
 })
 
 
@@ -121,7 +126,14 @@ async function validateUser(user) {
 }
 
 function verifyToken(req,res,next){
-    let decodedCookie = decodeURIComponent( req.headers.cookie);
+    let decodedCookie = decodeURIComponent(req.headers.cookie);
+
+    if (decodedCookie==undefined || decodedCookie=='undefined') {
+        req.valid=false;
+        req.user=undefined;
+        next();
+        return;
+    }
     let cookieObject = JSON.parse(decodedCookie.substring(decodedCookie.indexOf(':')+1))
     //    console.log(cookieObject);
     jwt.verify(cookieObject.token,ACCESS_TOKEN,(err,decoded)=>{
