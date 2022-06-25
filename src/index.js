@@ -1,5 +1,5 @@
 
-const PORT = 3146;
+const PORT = 443;
 
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
