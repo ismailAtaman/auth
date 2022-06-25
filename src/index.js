@@ -1,5 +1,5 @@
 
-const PORT = 3000;
+// const PORT = 3000;
 
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
@@ -73,7 +73,7 @@ app.get('/members',verifyToken,(req,res)=>{
 })
 
 
-app.listen(PORT,()=>{console.log(`Server running on port ${PORT}`)});
+app.listen(process.env.PORT,()=>{console.log(`Server running on port ${PORT}`)});
 
 async function getUserByEmail(email) {
     let promise = new Promise((resolve,reject)=>{
