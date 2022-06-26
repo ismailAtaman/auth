@@ -55,7 +55,7 @@ body {
     font-family: inherit;
     font-size: 0.9rem;
     display: block;
-    width: 30rem;
+    width: min(30rem, 60vw);
     height: 2rem;
     border-radius: 0.5rem;
     border:none;
@@ -144,3 +144,10 @@ body {
     
 }
 
+.center {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+}

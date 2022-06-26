@@ -1,0 +1,10 @@
+
+<div class="navBar">
+    <span class="navLink" action="/logout/">Log-out</span>    
+</div>
+
+<script>
+    for (let n of document.getElementsByClassName('navLink')) {
+        n.addEventListener('click',function(){ window.open(this.getAttribute('action'),'_parent')})
+    }
+</script>

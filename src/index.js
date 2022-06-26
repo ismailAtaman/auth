@@ -8,44 +8,48 @@ const password = require('./password.js');
 
 const app = express();
 
-app.use(express.static('public'));
+
 app.set('view engine','ejs');
 
-let ACCESS_TOKEN, REFRESH_TOKEN;
-db.all('SELECT * FROM tokens',(err,res)=>{
-    ACCESS_TOKEN = res.find(e=> e.tokenType=='access').token;
-    REFRESH_TOKEN = res.find(e=> e.tokenType=='refresh').token;
-});
+app.use(express.static('public'));
+app.use(express.json());
+// app.use(express.urlencoded());
+
 
 app.get('/',(req,res)=>{
-    res.redirect(301,'/members')
+    res.redirect(302,'/members')
 })
-
 
 app.get('/new',(req,res)=>{
     res.render('new')
+})
+
+app.get('/logout',(req,res)=>{
+    console.log('Logging out..')
+    res.clearCookie('auth');
+    res.render('logout')
 })
 
 app.get('/login',(req,res)=>{
     res.render('login')
 })
 
-
-app.use(express.json());
-app.use(express.urlencoded());
 app.get('/userExists',(req,res)=>{
     getUserByEmail(req.query.email).then((r)=>res.json({exists:true})).catch((err)=>res.json({exists:false}));
 })
 
-app.use(express.json());
 
+app.get('/members',verifyToken,(req,res)=>{
+    if (!req.valid) { res.status(401).redirect(302,'/login'); return 0;}
+    res.render('members', {user: req.user})
 
+})
 
 app.post('/create',(req,res)=>{
     createNewUser({email:req.body.email, password:req.body.password, displayName:req.body.displayName}).then((r)=>{
         if (r.sucess) {
             console.log('User created')            
-            res.redirect(301,'/login')
+            res.redirect(302,'/login')
         }
     }).catch(e=>{
         console.error(e.error);
@@ -53,31 +57,45 @@ app.post('/create',(req,res)=>{
     })
 })
 
-app.post('/auth',(req,res)=>{
-    let user = {email: req.body.email, password:req.body.password}
-    validateUser(user).then(valid=>{
-        if (valid) {
-            let token = jwt.sign({user: user.email},ACCESS_TOKEN,{expiresIn: 60*60});
-            let cookieOptions = {
-                expires:new Date(Date.now()+60*60*100),
-                httpOnly: true,
-            }
-            res.status(200).clearCookie('auth').cookie('auth',{token:token},cookieOptions).redirect(301,'/members')
-        } else {
-            res.status(403).end('Not authorized.')
+app.post('/auth',(req,res)=>{    
+    let data=[];
+    req.on('data',(chunk)=>{
+        data.push(chunk)
+    }).on('end',()=>{
+        data = decodeURIComponent(data.concat().toString());
+        data = data.split('&')
+        for (let obj of data) {
+            let eqPos = obj.indexOf('=');
+            req.body[obj.substring(0,eqPos)]=obj.substring(eqPos+1);
         }
+        console.log(req.body)
+        let user = {email: req.body.email.toLowerCase(), password:req.body.password}
 
-    }).catch(e=>console.log(e))
+        validateUser(user).then(valid=>{
+            if (valid) {
+                let token = jwt.sign({user: user.email},ACCESS_TOKEN,{expiresIn: 60*60});
+                let cookieOptions = {
+                    expires:new Date(Date.now()+60*60*100),
+                    httpOnly: true,
+                }
+                res.status(200).clearCookie('auth').cookie('auth',{token:token},cookieOptions).redirect(302,'/members')
+            } else {
+                res.status(403).end('Not authorized.')
+            }
+    
+        }).catch(e=>console.log(e))
+    })
 })
 
-app.get('/members',verifyToken,(req,res)=>{
-    if (!req.valid) { res.status(401).redirect(301,'/new'); return 0;}
-    res.render('members', {user: req.user})
+let ACCESS_TOKEN, REFRESH_TOKEN;
+db.all('SELECT * FROM tokens',(err,res)=>{
+    ACCESS_TOKEN = res.find(e=> e.tokenType=='access').token;
+    REFRESH_TOKEN = res.find(e=> e.tokenType=='refresh').token;
+    app.listen(PORT,()=>{console.log(`Server running on port ${PORT}`)});
+});
 
-})
 
 
-app.listen(PORT,()=>{console.log(`Server running on port ${PORT}`)});
 
 async function getUserByEmail(email) {
     let promise = new Promise((resolve,reject)=>{

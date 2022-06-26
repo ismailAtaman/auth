@@ -40,7 +40,7 @@ window.addEventListener('load',()=>{
                             if (messageArea.innerText=='Email already in use.') messageArea.innerText = '';
                         }
                     })
-                    xhr.open('GET','/userExists?email='+this.value);
+                    xhr.open('GET','/userExists?email='+this.value.toLowerCase());
                     xhr.send();
                 }
             })
