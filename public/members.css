@@ -1,0 +1,53 @@
+
+#dataLog {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top:50%;
+    transform: translate(-50%, -50%);
+    backdrop-filter: brightness(50%);
+    background-color: #777;
+    border:1px solid white;
+    border-radius: 0.3rem;
+    box-shadow: 3px 3px 10px 3px #222;
+    width: 80vw;
+    font-size: 0.75rem;
+    height: 60vh;    
+
+    overflow-y: scroll;
+    padding: 1rem;
+}
+
+
+#dataLog ol {
+    height: max-content;
+    padding: 1rem;
+    list-style-type:decimal; 
+}
+
+#dataLog li {
+    min-width: 50vw;
+    height: fit-content;
+    display: grid;
+    grid-template-columns: 1fr 1fr 
+}
+
+
+.bar {
+    display: inline-block;
+    position: relative;
+    content: ' ';
+    background: linear-gradient(90deg, hsl(160, 50%, 20%), hsl(160, 50%, 40%));
+    height: 1rem;
+    width: 0;
+}
+
+.bar::after {
+    content: '' ;
+    display: block;
+    width: 10rem;
+    height: 100%;
+    background-color: transparent;
+    border: 1px solid whitesmoke;
+    border-radius: 0.3rem;
+}

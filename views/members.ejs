@@ -5,6 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=100vw, initial-scale=1.0">
     <link rel="stylesheet" href="auth.css">
+    <link rel="stylesheet" href="members.css">
+    <script src="members.js"></script>
     <title>ntx/rx - Members</title>
 </head>
 <body>
@@ -14,6 +16,15 @@
     <div>Welcome <%=locals.user %></div>
     
     <br>
-   
+    
+    <form id="fileUpload" method="post" action="/upload" enctype="multipart/form-data">
+        <input type="file" name="uploadFile" id="uploadFile" multiple="multiple"/>
+    </form>
+
+    <div id="dataLog">
+        <div>Uploading files:</div>
+        <ol id="log">            
+        </ol>
+    </div>
 </body>
 </html>

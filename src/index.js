@@ -1,6 +1,8 @@
 
 const PORT = process.env.PORT || 3146;
+const UPLOAD_PATH = './data/'
 const express = require('express');
+const fileUpload = require('express-fileupload');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./data/auth.db');
 const jwt = require('jsonwebtoken');
@@ -35,26 +37,40 @@ app.get('/login',(req,res)=>{
 })
 
 app.get('/userExists',(req,res)=>{
-    getUserByEmail(req.query.email).then((r)=>res.json({exists:true})).catch((err)=>res.json({exists:false}));
+    getUserByEmail(req.query.email).then(()=>res.json({exists:true})).catch(()=>res.json({exists:false}));
 })
 
 
 app.get('/members',verifyToken,(req,res)=>{
     if (!req.valid) { res.status(401).redirect(302,'/login'); return 0;}
+
     res.render('members', {user: req.user})
 
 })
 
 app.post('/create',(req,res)=>{
-    createNewUser({email:req.body.email, password:req.body.password, displayName:req.body.displayName}).then((r)=>{
-        if (r.sucess) {
-            console.log('User created')            
-            res.redirect(302,'/login')
+    let data=[];
+    req.on('data',(chunk)=>{
+        data.push(chunk)
+    }).on('end',()=>{
+        data = decodeURIComponent(data.concat().toString());
+        data = data.split('&')
+        for (let obj of data) {
+            let eqPos = obj.indexOf('=');
+            req.body[obj.substring(0,eqPos)]=obj.substring(eqPos+1);
         }
-    }).catch(e=>{
-        console.error(e.error);
-        res.write(e.error).end()
-    })
+        createNewUser({email:req.body.email, password:req.body.password, displayName:req.body.displayName}).then((r)=>{
+            if (r.sucess) {
+                console.log('User created')            
+                res.redirect(302,'/login')
+            }
+        }).catch(e=>{
+            console.error(e.error);
+            res.write(e.error).end()
+        })
+    });
+
+
 })
 
 app.post('/auth',(req,res)=>{    
@@ -68,7 +84,7 @@ app.post('/auth',(req,res)=>{
             let eqPos = obj.indexOf('=');
             req.body[obj.substring(0,eqPos)]=obj.substring(eqPos+1);
         }
-        console.log(req.body)
+        //console.log(req.body)
         let user = {email: req.body.email.toLowerCase(), password:req.body.password}
 
         validateUser(user).then(valid=>{
@@ -86,6 +102,10 @@ app.post('/auth',(req,res)=>{
         }).catch(e=>console.log(e))
     })
 })
+
+app.use(fileUpload());
+app.post('/upload',processUpload);
+
 
 let ACCESS_TOKEN, REFRESH_TOKEN;
 db.all('SELECT * FROM tokens',(err,res)=>{
@@ -163,6 +183,56 @@ function verifyToken(req,res,next){
             req.user=decoded.user;
         }
     });
+    next();
+}
+
+async function processUpload(req, res, next) {
+  
+    if (req.files==undefined) { res.status(204).send('No file uploaded').end(); next(); return; }
+    if (req.files.uploadFile==undefined) { res.status(204).send('No file uploaded').end(); next(); return; }
+
+    let hostname =req.socket.remoteAddress.toString();
+    hostname = hostname.substring(hostname.indexOf('f:')+2);
+    let path = req.query.path;
+
+    if (req.files.uploadFile.length==undefined) {
+        let file = req.files.uploadFile;
+
+        let saveAs = file.name;
+        file.mv(UPLOAD_PATH+path+saveAs);
+        // db.run('INSERT INTO uploadLog VALUES ($hostName, $fileName, $fileSize, $savedAs, $logDate)',{
+        //     $hostName: hostname,
+        //     $fileName: file.name,
+        //     $fileSize: file.size,
+        //     $savedAs: saveAs,
+        //     $logDate: Date.now()
+        // })
+        res.status(200).send({status: 'success', files: 1, size: file.size})
+        next();
+        return;
+    }
+    
+    let size=0;
+    let count=1, saveAs;
+    for (let file of req.files.uploadFile) {        
+        size += file.size;    
+        // saveAs = Date.now()+'_'+file.name
+        saveAs = file.name;
+        file.mv(UPLOAD_PATH+path+saveAs);
+ 
+        db.run('INSERT INTO uploadLog VALUES ($hostName, $fileName, $fileSize, $savedAs, $logDate)',{
+            $hostName: hostname,
+            $fileName: file.name,
+            $fileSize: file.size,
+            $savedAs: saveAs,
+            $logDate: Date.now()
+        })
+        res.write(`${count} / ${req.files.uploadFile.length} uploaded. [${Math.round(file.size/1024,1)}kB]\n\n`);
+        count++;
+    }
+    res.write(`Success! Total ${req.files.uploadFile.length} files uploaded. [${Math.round(size/1024,1)}kB]\n\n`)
+    res.end();
+    // res.status(200).send({status: 'success', files: req.files.uploadFile.length, size: size})
     next();
 }
 
