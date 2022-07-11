@@ -70,7 +70,7 @@ router.post('/data',(req,res)=>{
         data.push(chunk)
     }).on('end',()=>{
         data = JSON.parse(decodeURIComponent(data.concat().toString()));
-        console.log("Command: " , data.command);       
+        // console.log("Command: " , data.command);       
         switch (data.command) {
             case 'maxRowId':                
                 smarthomeDB.all('SELECT * FROM maxRowId',(err,result)=>{
@@ -83,18 +83,25 @@ router.post('/data',(req,res)=>{
                 // console.log("SQL Data received");
                 // console.log("Table : ",data.table);
                 // console.log(Object.keys(data.payload[0]));
-                
+                //console.log("Payload length : ",data.payload.length)
+
+                if (data.payload.length==0) break;
+
                 let SQLQuery= 'INSERT INTO '+data.table+' VALUES('
                 for (let col of Object.keys(data.payload[0])) {
-                    SQLQuery +=col+', ';
+                    SQLQuery +='$'+col+', ';
                 }
                 SQLQuery=SQLQuery.substring(0,SQLQuery.length-2)+')';
                 console.log(SQLQuery);
-                for (let rec of data.payload) {                    
-                    
-                    smarthomeDB.run(SQLQuery,rec);
-                }
-                res.status(200);
+                for (let rec of data.payload) {                   
+                    const mutRec = Object.fromEntries(
+                        Object.entries(rec).map(([key, value]) =>                           
+                          [`$${key}`, value]
+                        )
+                    )             
+                    smarthomeDB.run(SQLQuery,mutRec)
+                }                
+                res.status(200);       
                 res.end();
                 break;
         }
