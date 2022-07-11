@@ -1,12 +1,10 @@
 body {
-    margin: 2rem;
+    margin: 1rem;
 }
 
 .title {
-    position: absolute;
-    top: 1rem;
-    left:2rem;
     font-size: 1.75rem;    
+    text-align: left;
 }
 
 #currentContainer {
