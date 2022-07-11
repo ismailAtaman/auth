@@ -13,7 +13,7 @@ router.use(verifyToken)
 
 
 router.get('/',(req,res)=>{
-    res.render('members', {user: req.user})
+    res.render('home', {user: req.user})
 })
 
 router.get('/home',(req,res)=>{
