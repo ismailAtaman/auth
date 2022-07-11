@@ -1,0 +1,255 @@
+@import url('https://fonts.googleapis.com/css2?family=Kdam+Thmor+Pro&display=swap');
+
+:root {
+    font-family: 'Kdam Thmor Pro', sans-serif;
+
+    /* Color variables */
+    --c-hue: 170;
+    --c-sat: 20%;
+
+    --s-actionSize: 6rem;
+}
+
+body {
+    font-family: inherit;
+    background-color: hsl(var(--c-hue), var(--c-sat), 10%);
+    color: white;
+    margin: 0;
+    padding: 0;
+}
+
+.header {
+    padding: 1rem;
+    padding-bottom: 0;
+    background-color:hsl(var(--c-hue), var(--c-sat), 15%);
+    border-bottom: 2px solid hsl(var(--c-hue), var(--c-sat), 70%);
+    box-shadow: 0px 3px 6px 0px hsl(var(--c-hue), var(--c-sat), 65%);
+}
+
+.navBar {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    margin-left:0;
+    
+}
+
+.navButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    width: 4.5rem;
+    height: 2rem;
+    cursor: pointer;
+    text-align: center;
+    padding-inline: 0.5rem;
+    padding-block: 0.3rem;
+    user-select: none;
+    border-radius: 0.3rem 0.3rem 0 0 ;
+}
+
+.navButton:active {
+    background-color: hsl(var(--c-hue), var(--c-sat), 50%);
+}
+
+#currentContainer {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    margin-top: 1.5rem;
+    max-width: max-content;
+}
+
+#currentContainer > div {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    padding: 0.2em;
+    min-width: 4rem;
+}
+
+.icon {
+    object-fit: contain;
+    max-height: 2rem;
+    padding-inline: 0.5rem;
+}
+
+#lastUpdate {
+    margin-left: 1rem;
+    font-size: 0.5rem;
+    color: #555;
+    text-align: right;
+}
+
+#actionContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(var(--s-actionSize),1fr));
+    gap: 1rem;
+    margin: 1rem;
+}
+
+
+.action {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: max(var(--s-actionSize),90%);
+    height: var(--s-actionSize);
+    background-color: hsl(var(--c-hue), var(--c-sat), 90%);
+    padding: 0.5rem;
+    padding-bottom: 1.5rem;
+    border-radius: 0.4rem;
+    user-select: none;
+    -webkit-user-select: none;
+    object-fit: scale-down;
+    justify-self: center;
+    box-shadow: 2px 2px 6px 0px black;
+    object-fit: cover;
+}
+.action >img {
+    max-width: 75%;
+    max-height: 75%;
+}
+
+.action:active {
+    background-color: hsl(var(--c-hue), var(--c-sat), 20%);
+}
+
+.action::after {
+    content: attr(alt);
+    font-size: 0.8rem;
+    background-color: hsl(var(--c-hue), var(--c-sat), 50%, 0.5);
+    color: hsl(var(--c-hue), var(--c-sat), 10%);
+    position: absolute;
+    bottom:0;
+    left: 0;
+    padding: 0.2rem;
+    border-radius: 0 0 0.4rem 0.4rem;
+    text-align: center;
+    width: calc(100% - 0.4rem)
+    
+}
+
+canvas {
+    max-width: 80%;
+    display: inline;
+    background-color: hsl(var(--c-hue), var(--c-sat), 70%);
+    margin: 1rem;
+    border-radius: 0.4rem;
+}
+
+#cityData {
+    margin: 1rem;
+}
+.weatherContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    max-width: max-content;
+    margin: 1rem;
+}
+
+#weatherIcon {
+    max-height: 2.5rem;
+}
+
+.weatherDesc {
+    margin-left: 0.5rem;
+    font-size: 0.9rem; 
+}
+
+#deviceContainer {
+    display: grid;
+    grid-template-columns: auto;
+    gap: 0.2rem;
+    margin: 1rem;
+}
+
+.device {
+    font-size: 1rem;
+}
+
+.subdevice {
+    padding-left: 1rem;
+    font-size: 0.8rem;
+    display: grid;
+    grid-template-columns: 80fr 10fr 10fr;
+    height: 2.5rem;
+}
+
+.subdevice input[type="button"] {
+    display: inline;
+    border-radius: 100%;
+    width: 3rem;
+    height: 2rem;
+    margin-right: 1rem ;
+    font-family: inherit;
+}
+
+.options {
+    margin: 1rem;
+}
+.option {
+    width: max-content;
+}
+
+.dataTable {
+    display: grid;
+    grid-template-columns: repeat(2, 0.85fr 0.05fr 0.05fr 0.05fr);
+    gap:0.5rem;
+    margin:1rem;
+    font-size: 0.7rem;
+    width: min(400px, 90vw)
+}
+
+.dataMax {
+    color: lightcoral;
+}
+
+/****************************** Generic Classes *********************************/
+
+.grid {
+    display: grid;
+}
+
+.cols-2 {
+    grid-template-columns: repeat(2,1fr);
+}
+
+.cols-3 {
+    grid-template-columns: repeat(3,1fr);
+}
+
+.gap-2rem {
+    gap: 2rem;
+}
+
+
+
+
+/**************************** For phone screen *********************************/
+@media only screen and (max-width: 600px) {
+    :root {
+        font-size: 14px;
+    }
+
+    body {
+        vertical-align: middle;
+    }
+
+    #actionContainer {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .weatherContainer {
+        justify-content: center;
+    }
+
+    canvas {
+        max-width: 95%;
+    }
+
+}

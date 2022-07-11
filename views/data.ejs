@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=100vw, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="data.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <script src="data.js"></script>   
+    <link rel="shortcut icon" href="icon/logo.png" type="image/png"> 
+    <title>Ataman - SmartHome - Data</title>
+</head>
+<body>
+    <%- include('_header.ejs') %>
+
+    <div class="stats grid cols-2 gap-2rem">
+        <div>
+            <div class="statsTitle">Highest - 24 hours</div>
+            <div class="statsData grid cols-2">
+                <span>Temp </span>
+                <span><%=locals.stats.maxTempToday%> °C</span>
+                <span>Humidity </span>
+                <span><%=locals.stats.maxHumToday%> %</span>
+                <span>Pm2.5 </span>
+                <span><%=locals.stats.maxAirQToday%></span>
+            </div>
+        </div>
+        <div>
+            <div class="statsTitle">Highest - All time</div>
+            <div class="statsData grid cols-2">
+                <span>Temp </span>
+                <span><%=locals.stats.maxTemp%> °C  </span>
+                <span>Humidity </span>
+                <span><%=locals.stats.maxHum%> %  </span>
+                <span>Pm2.5 </span>
+                <span><%=locals.stats.maxAir%></span>
+            </div>
+            <span style="margin:0; padding:0; font-size:0.6rem; color: #777;">Highest temperature at <%=locals.stats.dateMaxTemp%></span><br>
+            <span style="margin:0; padding:0; font-size:0.6rem; color: #777;">Highest humidity at <%=locals.stats.dateMaxHum%></span>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div style="font-size:0.9rem">Hourly averages for today</div><br>
+        <div id="dataTable"></div>
+    </div>
+
+    <div style="margin:1rem; font-size: 0.8rem; ">Select the period you would like to generate the data graphs</div>
+    <div class="graphOptions">
+
+        <span class="dataOptionsButton" action="thisDay">Today</span>
+        <span class="dataOptionsButton" action="thisWeek">This week</span>
+        <span class="dataOptionsButton" action="thisMonth">This month</span>
+        <span class="dataOptionsButton" action="thisYear">This year</span>
+    </div>
+
+    <div id="graphContainer" class="graphContainer">
+        <canvas id="cTemp"></canvas>
+        <canvas id="cHum"></canvas>
+        <canvas id="cAirQ"></canvas>
+    </div>
+
+</body>
+</html>

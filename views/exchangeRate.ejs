@@ -1,0 +1,94 @@
+<style>
+    #exchangeRates {
+        margin:1rem;
+        margin-top:0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill,minmax(3rem,1fr));
+        gap:1rem;
+        font-size: 0.8rem;
+        min-width: 50vw;
+    }
+
+    .rate{
+        display: flex;
+        flex-direction: column;
+        justify-content:  center;
+        align-items: center;
+    }
+
+    .exchangeImg {
+        height: 2rem;
+        border: 1px solid rgba(250, 250,250,0.5);
+        border-radius: 100%;
+    }
+
+    .rateName {
+        margin-top:0.5rem;
+        font-size: 0.7rem;
+    }
+
+    .dateTime{
+        margin: 0.3rem;
+        margin-left:1rem;
+        font-size: 0.5rem;
+        color: #666;
+    }
+
+    .change {       
+        font-size:0.6rem;
+        padding: 0.1rem;
+    }
+
+    .zero {
+        color: white;
+    }
+
+    .negative { 
+        color: lightcoral;
+    }
+
+    .positive {
+        color: lightgreen
+    }
+
+</style>
+
+
+<div id="exchangeRates">
+    <div class="rate"><img src="icon/exchange/eur.png" class="exchangeImg"/><span class="rateName">EUR </span><span id="EUR" class="rateVal"></span><span class="change EUR"></span></div>
+    <div class="rate"><img src="icon/exchange/try.png" class="exchangeImg"/><span class="rateName">TRY </span><span id="TRY" class="rateVal"></span><span class="change TRY"></span></div>
+    <div class="rate"><img src="icon/exchange/cny.png" class="exchangeImg"/><span class="rateName">CNY </span><span id="CNY" class="rateVal"></span><span class="change CNY"></span></div>
+    <div class="rate"><img src="icon/exchange/pkr.png" class="exchangeImg"/><span class="rateName">PKR </span><span id="PKR" class="rateVal"></span><span class="change PKR"></span></div>
+    <div class="rate"><img src="icon/exchange/egp.png" class="exchangeImg"/><span class="rateName">EGP </span><span id="EGP" class="rateVal"></span><span class="change EGP"></span></div>
+    <div class="rate"><img src="icon/exchange/mad.png" class="exchangeImg"/><span class="rateName">MAD </span><span id="MAD" class="rateVal"></span><span class="change MAD"></span></div>
+
+</div>
+    <div class="dateTime" id="dateTime"></div>
+<script>
+    const XHR = new XMLHttpRequest()
+    XHR.addEventListener("load", onLoad);
+    XHR.open("GET", "/exchange");
+    XHR.send();
+
+    function onLoad(res) {
+        const response =JSON.parse(XHR.response);        
+        const rates = response.rates;
+        const change = response.change;
+        for (let el of document.getElementsByClassName('rateVal')) {
+            let r = rates[el.getAttribute('id')]
+            if (r<1) r= 1/r; 
+            el.innerText =r.toFixed(3);
+        }
+        document.getElementById('dateTime').innerText='as of '+rates.date+' '+rates.hour+':00';
+
+        for (let el of document.getElementsByClassName('change')) {           
+            let changeVal= (100 * change[el.className.replace('change','').trim()]).toFixed(2);
+            el.innerText = changeVal+'%';
+            if (change[el.className.replace('change','').trim()]=='EUR') changeVal=-changeVal;
+            
+            changeVal==0? el.classList.add('zero') : changeVal>0? el.classList.add('positive') : el.classList.add('negative') 
+        }
+
+    }
+    
+</script>

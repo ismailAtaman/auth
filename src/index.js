@@ -8,7 +8,11 @@ const db = new sqlite3.Database('./data/auth.db');
 const jwt = require('jsonwebtoken');
 const password = require('./password.js');
 
+const members = require('./members')
 const app = express();
+
+
+let clients=[];
 
 
 app.set('view engine','ejs');
@@ -40,13 +44,8 @@ app.get('/userExists',(req,res)=>{
     getUserByEmail(req.query.email).then(()=>res.json({exists:true})).catch(()=>res.json({exists:false}));
 })
 
+app.use('/members', members)
 
-app.get('/members',verifyToken,(req,res)=>{
-    if (!req.valid) { res.status(401).redirect(302,'/login'); return 0;}
-
-    res.render('members', {user: req.user})
-
-})
 
 app.post('/create',(req,res)=>{
     let data=[];
@@ -103,19 +102,21 @@ app.post('/auth',(req,res)=>{
     })
 })
 
-app.use(fileUpload());
-app.post('/upload',processUpload);
+app.get('/events',eventsHandler);
+
+app.post('/action',processAction);
+
+// app.use(fileUpload());
+// app.post('/upload',processUpload);
 
 
 let ACCESS_TOKEN, REFRESH_TOKEN;
 db.all('SELECT * FROM tokens',(err,res)=>{
     ACCESS_TOKEN = res.find(e=> e.tokenType=='access').token;
     REFRESH_TOKEN = res.find(e=> e.tokenType=='refresh').token;
+    process.env.ACCESS_TOKEN= ACCESS_TOKEN;
     app.listen(PORT,()=>{console.log(`Server running on port ${PORT}`)});
 });
-
-
-
 
 async function getUserByEmail(email) {
     let promise = new Promise((resolve,reject)=>{
@@ -234,6 +235,251 @@ async function processUpload(req, res, next) {
     res.end();
     // res.status(200).send({status: 'success', files: req.files.uploadFile.length, size: size})
     next();
+}
+
+////////// Server Side Events Handling and Dispatch //////////
+
+
+
+function eventsHandler(req, res, next) {
+    const headers = {
+      'Content-Type': 'text/event-stream',
+      'Connection': 'keep-alive',
+      'Cache-Control': 'no-cache'
+    };
+
+    if (!res.headersSent) res.writeHead(200,headers);
+
+ 
+    const clientId = Date.now();
+    const newClient = {
+        clientId: clientId,
+        res
+    };
+  
+    let eventData = {event:'register', clientId: clientId};
+    res.write("data: "+JSON.stringify(eventData)+'\n\n');
+    clients.push(newClient);  
+    req.on('close', () => {
+        //console.log(`${clientId} connection closed.`);
+        clients = clients.filter(client => client.clientid !== clientId);
+    });    
+    next();
+}
+
+function dispatchClientEvent(eventData) {
+    let client = clients.find(e=>e.clientId==eventData.clientId);
+    if (client!=undefined) { 
+        client.res.write("data: "+JSON.stringify(eventData)+'\n\n'); 
+    } else {
+        for (let client of clients) { client.response.write("data: "+JSON.stringify(eventData)+'\n\n'); }
+    }
+}   
+
+async function processAction(request, response, next) {
+    let body=[];
+    let message; 
+    request.on('data',(chunk)=>{body.push(chunk);}).on('end',async ()=>{
+        
+        body = Buffer.concat(body).toString();
+        message= JSON.parse(decodeURIComponent(body));
+        // response.send(`Command received. Device : ${message.device}, Command : ${message.command}`)
+        
+        if (message.device == 'web') {
+            if (message.command=='currentWeather') {
+                getCurrentWeather().then((weather)=>{
+                    let eventData = {event: 'currentWeather', payload : {}};
+                    eventData.payload.weather = weather;
+                    eventData.clientId = message.clientId;
+                    dispatchClientEvent(eventData);
+                })               
+            }
+            if (message.command=='forecastWeather') {
+                getWeatherForecast().then((weather)=>{
+                    let eventData = {event: 'forecastWeather', payload : {}};
+                    eventData.payload.weather = weather;
+                    eventData.clientId = message.clientId;
+                    dispatchClientEvent(eventData);
+                })
+            }
+        }
+
+        if (message.device == 'hub') {
+            if (message.command=='startActivity'){                      
+                hub[message.command](message.params);                
+                console.log('Hub command executed. Command : '+message.command+' Params : '+message.params )
+            } 
+
+            if (message.command=='sendCommand') {
+                let param1=message.params.substring(0,message.params.indexOf('-'));
+                let param2=message.params.substring(message.params.indexOf('-')+1);
+                hub[message.command](param1,param2);
+                console.log('Hub command executed. Command : '+message.command+' Params : '+param1, param2 );
+
+                let eventData = {event: 'deviceUpdate', payload : {device: 'hub', command : message.command, params :message.params}}
+                eventData.clientId = message.clientId;
+                dispatchClientEvent(eventData);
+            }
+        }
+
+        if (message.device == 'hue') {
+            lightAction = (message.command == 'lightsOn'); 
+            let dev = devices.find(e=> e.id===message.device);
+            for (let light of dev.deviceList) {
+                hue.setLight(light.id,lightAction).then(state=>{ 
+                    if (state) {
+                        let eventData = {event: 'lightsUpdate', payload : {command : message.command}}
+                        eventData.clientId = message.clientId;
+                        dispatchClientEvent(eventData);
+                    }
+                });
+            }
+        }
+
+        if (message.device == 'purifier') {
+            if (message.command == 'getEnvData') {
+                const data = `data: {}\n\n`;
+                let hum = await getHum(airPurifier);
+                let temp  = await getTemp(airPurifier);
+                let airQ =await getAirQ(airPurifier);
+                now = getDate();
+
+                if (temp==undefined) {
+                    console.error('Can not read environment data')
+                    return;
+                }
+
+                let eventData = {event: 'envDataUpdate', payload : {change: 'currentHum', value :hum, unit:' %', time: now.timeString}}
+                eventData.clientId = message.clientId;
+                dispatchClientEvent(eventData);
+            
+                eventData = {event: 'envDataUpdate', payload : {change: 'currentTemp', value :temp.value, unit: '°C', time: now.timeString}}
+                eventData.clientId = message.clientId;
+                dispatchClientEvent(eventData);
+              
+                eventData = {event: 'envDataUpdate', payload : {change: 'currentAirQ', value :airQ,  unit: ' ', time: now.timeString}}
+                eventData.clientId = message.clientId;
+                dispatchClientEvent(eventData);
+            }
+        }
+
+        if (message.device== 'all') {
+            if (message.command == 'getStatus') {
+                
+            }
+        }
+
+        if (message.device=='server') {
+            if (message.command == 'getData') {                
+                // let SQLQuery = (message.scope='day')?  "SELECT * FROM envData "+message.whereClause : "SELECT * FROM avgDaily "+message.whereClause ;
+                let SQLQuery = "SELECT * FROM envData "+message.whereClause;
+                // console.log(SQLQuery);
+                db.all(SQLQuery,(err,data)=>{
+                    let eventData = {event: 'serverData', action: message.action, payload : data}
+                    eventData.clientId = message.clientId;
+                    dispatchClientEvent(eventData);
+                })
+            }
+
+            if (message.command == 'runQuery') {                
+                let SQLQuery = message.SQLQuery;
+                //console.log(SQLQuery)
+                db.all(SQLQuery,(err,data)=>{
+                    let eventData = {event: 'serverData', action: message.action, payload : data}
+                    eventData.clientId = message.clientId;
+                    dispatchClientEvent(eventData);
+                })
+            }
+
+            if (message.command == 'getFolder') {
+                let folder = getDirectFoldersAndFiles(message.payload.folder);
+                let eventData = {event: 'getFolder', payload : {folder: folder}}
+                eventData.clientId = message.clientId;
+                dispatchClientEvent(eventData);
+            }
+
+            if (message.command == 'createFolder') {
+                if (!fs.existsSync(UPLOAD_PATH+message.payload.parentFolder+message.payload.folder)) fs.mkdirSync(UPLOAD_PATH+message.payload.parentFolder+message.payload.folder);
+                let eventData = {event: 'createFolder', payload : {created: true}}
+                eventData.clientId = message.clientId;
+                dispatchClientEvent(eventData);
+            }
+
+            if (message.command =='getNews') {
+                // console.log('getNews Request');
+                if (message.section=='tr') {
+                    const articles = await getNewsHeadlines(message.section);
+                    let eventData = {event: 'getNews', payload : {articles: articles}}
+                    eventData.clientId = message.clientId;
+                    dispatchClientEvent(eventData);
+                    return;
+                }
+
+                const articles = await getReutersArticles(message.section);
+                let eventData = {event: 'getNews', payload : {articles: articles}}
+                eventData.clientId = message.clientId;
+                dispatchClientEvent(eventData);
+            }
+        }
+    })
+    response.end();
+    next();
+}
+
+
+async function sendHTTPRequest(options, headers, data) {
+    const http = require("https");
+    return new Promise((resolve,_reject)=>{
+        let dat=undefined;
+        if (data!=undefined) { 
+            dat = JSON.stringify(data);
+            options.headers = {
+                'Content-Type': 'text/plain;charset=UTF-8',
+                'Content-Length': dat.length }
+        }
+        const req = http.request(options, response);
+        req.setHeader('User-Agent','Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0');       
+        if (headers!=undefined) {
+            for (let header of headers) {
+                req.setHeader(header.name,header.value)
+            }
+        }
+        if (dat!= undefined) req.write(dat);
+        
+        function response(res){
+            let body=[];
+            res.on('data',(chunk)=>{ body.push(chunk)}).on('end', ()=>{body = Buffer.concat(body).toString(); resolve(body);  });                     
+        }
+        req.end();        
+    })
+}
+
+async function getReutersArticles(section) {    
+    if (section==undefined) section='world';
+    return new Promise(async (resolve,_reject)=>{
+        let options = {
+            host: 'www.reuters.com',
+            port: 443,
+            path: '/pf/api/v3/content/fetch/articles-by-section-alias-or-id-v1/?query=%7B%22called_from_a_component%22%3Atrue,%22fetch_type%22%3A%22section%22,%22section_id%22%3A%22%2F'+section+'%2F%22,%22size%22%3A20,%22sophi_page%22%3A%22%22,%22sophi_widget%22%3A%22%22,%22website%22%3A%22reuters%22%7D&d=100&_website=reuters',
+            method: 'GET',
+        };
+        const news  = await sendHTTPRequest(options,undefined);
+        resolve(JSON.parse(news.toString()).result.articles) ;
+    })
+}
+
+async function getNewsHeadlines(language) {    
+    if (language==undefined) language='en';
+    return new Promise(async (resolve,_reject)=>{
+        let options = {
+            host: 'newsapi.org',
+            port: 443,
+            path: '/v2/top-headlines?language='+language+'&apiKey=8c7adb4f0c214330b796f027610e5eb4',
+            method: 'GET',
+        };
+        const news  = await sendHTTPRequest(options,undefined);
+        resolve(JSON.parse(news.toString()).articles) ;  
+    })
 }
 
 

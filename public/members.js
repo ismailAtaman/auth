@@ -2,9 +2,6 @@
 let uploadFile;
 
 window.addEventListener('load',()=>{
-    uploadFile = document.getElementById('uploadFile');
-    uploadFile.addEventListener('change',upload)
-
     console.log('On load done.')
 });
 

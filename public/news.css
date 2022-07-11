@@ -1,0 +1,125 @@
+
+
+:root {
+    --c-hue: 140;
+    --c-sat: 0%;
+}
+
+
+#news {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin:1rem;
+}
+.new {
+    position: relative;
+    cursor: pointer;
+    border-radius: 0.6rem;
+    background-color: hsl(calc(var(--c-hue) + 0), calc( var(--c-sat) + 5%), 30%);
+    padding: 1rem;
+    box-shadow: 3px 3px 10px 0px black;
+    transition: all 150ms ease-in-out;
+    padding-bottom: 2rem;
+}
+
+.new:hover {
+    background-color:hsl(calc(var(--c-hue) + 15), calc( var(--c-sat) + 15%), 35%);
+    box-shadow: 6px 6px 20px 0px black;
+}
+
+.new:hover .datePublished {
+    color: #ecffec;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    font-size: 1.2rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.new img {
+    border-radius: 0.6rem;
+    width: 240px;
+
+}
+
+.subdiv {
+    display: grid;
+    grid-template-columns: 0.4fr 0.6fr;
+    gap:0.5rem;
+    margin-top: 0.5rem;
+}
+.desc {
+    display: inline;
+    font-size: 0.85rem;
+
+}
+
+
+li {
+    text-align: start;
+    list-style: circle;
+    margin-bottom: 0.8rem;
+    padding-left: 0;
+}
+
+.sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(6rem,1fr));
+    gap: 0.8rem;
+    margin: 1rem;
+}
+
+.section {
+    cursor: pointer;
+    width: 6 rem;
+    font-size: 0.9rem;
+    background-color:hsl(var(--c-hue), var(--c-sat), 25%);
+    border-radius: 0.4rem;
+    padding: 0.3rem;
+    text-align: center;
+    margin-inline: 0.2rem;
+}
+
+.section:hover {
+    background-color:hsl(calc(var(--c-hue) - 30), calc( var(--c-sat) + 15%), 50%);
+
+}
+
+.unread {
+    background-color:hsl(calc(var(--c-hue) - 40), calc( var(--c-sat) + 20%), 55%);
+}
+
+.active {
+    background-color:hsl(calc(var(--c-hue) - 30), calc( var(--c-sat) + 15%), 40%);
+}
+
+.datePublished {
+    position: absolute;
+    font-size: 0.7rem;
+    color: #999;
+    bottom:0.5rem;
+    left:1rem;
+}
+
+@media only screen and (max-width: 600px) {
+    #news {
+        grid-template-columns: repeat(1, 1fr);
+    }
+
+    .new img {
+        width: 120px;
+    }
+    
+    .sections {
+        grid-template-columns: repeat(auto-fill,minmax(5rem,1fr));
+    }
+    .section {
+        font-size: 0.75rem;
+        width: 5rem;
+    }
+}
+    
