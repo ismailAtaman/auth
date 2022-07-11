@@ -1,0 +1,50 @@
+body {
+    margin: 2rem;
+}
+
+.title {
+    position: absolute;
+    top: 1rem;
+    left:2rem;
+    font-size: 1.75rem;    
+}
+
+#currentContainer {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    margin:0;
+    margin-top: 1.5rem;
+    max-width: max-content;
+}
+
+#currentContainer > div {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.25rem;
+    padding: 0.2em;
+    min-width: 4rem;
+}
+
+.icon {
+    object-fit: contain;
+    max-height: 2rem;
+    padding-inline: 0.5rem;
+}
+
+.weatherContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    max-width: max-content;
+    margin: 1rem;
+}
+
+#weatherIcon {
+    max-height: 2.5rem;
+}
+
+.weatherDesc {
+    margin-left: 0.5rem;
+    font-size: 0.9rem; 
+}

@@ -1,6 +1,5 @@
 <style>
     #exchangeRates {
-        margin:1rem;
         margin-top:0;
         display: grid;
         grid-template-columns: repeat(auto-fill,minmax(3rem,1fr));
@@ -55,12 +54,12 @@
 
 
 <div id="exchangeRates">
-    <div class="rate"><img src="icon/exchange/eur.png" class="exchangeImg"/><span class="rateName">EUR </span><span id="EUR" class="rateVal"></span><span class="change EUR"></span></div>
-    <div class="rate"><img src="icon/exchange/try.png" class="exchangeImg"/><span class="rateName">TRY </span><span id="TRY" class="rateVal"></span><span class="change TRY"></span></div>
-    <div class="rate"><img src="icon/exchange/cny.png" class="exchangeImg"/><span class="rateName">CNY </span><span id="CNY" class="rateVal"></span><span class="change CNY"></span></div>
-    <div class="rate"><img src="icon/exchange/pkr.png" class="exchangeImg"/><span class="rateName">PKR </span><span id="PKR" class="rateVal"></span><span class="change PKR"></span></div>
-    <div class="rate"><img src="icon/exchange/egp.png" class="exchangeImg"/><span class="rateName">EGP </span><span id="EGP" class="rateVal"></span><span class="change EGP"></span></div>
-    <div class="rate"><img src="icon/exchange/mad.png" class="exchangeImg"/><span class="rateName">MAD </span><span id="MAD" class="rateVal"></span><span class="change MAD"></span></div>
+    <div class="rate"><img src="../img/exchange/eur.png" class="exchangeImg"/><span class="rateName">EUR </span><span id="EUR" class="rateVal"></span><span class="change EUR"></span></div>
+    <div class="rate"><img src="../img/exchange/try.png" class="exchangeImg"/><span class="rateName">TRY </span><span id="TRY" class="rateVal"></span><span class="change TRY"></span></div>
+    <div class="rate"><img src="../img/exchange/cny.png" class="exchangeImg"/><span class="rateName">CNY </span><span id="CNY" class="rateVal"></span><span class="change CNY"></span></div>
+    <div class="rate"><img src="../img/exchange/pkr.png" class="exchangeImg"/><span class="rateName">PKR </span><span id="PKR" class="rateVal"></span><span class="change PKR"></span></div>
+    <div class="rate"><img src="../img/exchange/egp.png" class="exchangeImg"/><span class="rateName">EGP </span><span id="EGP" class="rateVal"></span><span class="change EGP"></span></div>
+    <div class="rate"><img src="../img/exchange/mad.png" class="exchangeImg"/><span class="rateName">MAD </span><span id="MAD" class="rateVal"></span><span class="change MAD"></span></div>
 
 </div>
     <div class="dateTime" id="dateTime"></div>
@@ -84,8 +83,7 @@
         for (let el of document.getElementsByClassName('change')) {           
             let changeVal= (100 * change[el.className.replace('change','').trim()]).toFixed(2);
             el.innerText = changeVal+'%';
-            if (change[el.className.replace('change','').trim()]=='EUR') changeVal=-changeVal;
-            
+            if (change[el.className.replace('change','').trim()]=='EUR') changeVal=-changeVal;            
             changeVal==0? el.classList.add('zero') : changeVal>0? el.classList.add('positive') : el.classList.add('negative') 
         }
 

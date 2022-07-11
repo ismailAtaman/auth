@@ -42,7 +42,8 @@ a {
 
 .new img {
     border-radius: 0.6rem;
-    width: 240px;
+    max-width: 240px;
+    max-height: 200px;
 
 }
 
@@ -52,12 +53,11 @@ a {
     gap:0.5rem;
     margin-top: 0.5rem;
 }
+
 .desc {
     display: inline;
     font-size: 0.85rem;
-
 }
-
 
 li {
     text-align: start;

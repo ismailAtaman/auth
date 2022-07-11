@@ -1,0 +1,1 @@
+{"data":"weather","time":1657543338033,"payload":{"desc":"Overcast clouds","icon":"04d","temp":39,"tempMin":38,"tempMax":39,"feelsLike":46,"humidity":66,"pressure":997,"wind":{"speed":3.73,"deg":328,"gust":4.05},"visibility":10000,"city":"Dubai"}}

@@ -2,15 +2,18 @@
 const PORT = process.env.PORT || 3146;
 const UPLOAD_PATH = './data/'
 const express = require('express');
+const fs = require('fs');
 const fileUpload = require('express-fileupload');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./data/auth.db');
+const smarthomeDB = new sqlite3.Database('./smarthome.db');
 const jwt = require('jsonwebtoken');
 const password = require('./password.js');
 
 const members = require('./members')
 const app = express();
 
+const STORE_DATA = 'data/store.data';
 
 let clients=[];
 
@@ -105,6 +108,21 @@ app.post('/auth',(req,res)=>{
 app.get('/events',eventsHandler);
 
 app.post('/action',processAction);
+
+
+app.get('/exchange',(req,res)=>{ 
+    smarthomeDB.get('SELECT * FROM currentRate',(err,result)=>{        
+        let rates = result;
+        db.get('SELECT * FROM exchangeRateChange',(err,result)=>{
+            let change = result;
+            let ret = new Object();
+            ret.rates= rates;
+            ret.change = change;  
+            res.status(200).json(ret).end();
+        })
+
+    })
+ });
 
 // app.use(fileUpload());
 // app.post('/upload',processUpload);
@@ -339,27 +357,26 @@ async function processAction(request, response, next) {
         if (message.device == 'purifier') {
             if (message.command == 'getEnvData') {
                 const data = `data: {}\n\n`;
-                let hum = await getHum(airPurifier);
-                let temp  = await getTemp(airPurifier);
-                let airQ =await getAirQ(airPurifier);
-                now = getDate();
+                smarthomeDB.get('SELECT * FROM latestEnv',(err,result)=>{
+                    if (err) return;
+                    //console.log(result);
+                    let hum = result.hum;
+                    let temp = result.temp;
+                    let airQ = result.airQ;
+                    now = getDate();
 
-                if (temp==undefined) {
-                    console.error('Can not read environment data')
-                    return;
-                }
-
-                let eventData = {event: 'envDataUpdate', payload : {change: 'currentHum', value :hum, unit:' %', time: now.timeString}}
-                eventData.clientId = message.clientId;
-                dispatchClientEvent(eventData);
-            
-                eventData = {event: 'envDataUpdate', payload : {change: 'currentTemp', value :temp.value, unit: '°C', time: now.timeString}}
-                eventData.clientId = message.clientId;
-                dispatchClientEvent(eventData);
-              
-                eventData = {event: 'envDataUpdate', payload : {change: 'currentAirQ', value :airQ,  unit: ' ', time: now.timeString}}
-                eventData.clientId = message.clientId;
-                dispatchClientEvent(eventData);
+                    let eventData = {event: 'envDataUpdate', payload : {change: 'currentHum', value :hum, unit:' %', time: now.timeString}}
+                    eventData.clientId = message.clientId;
+                    dispatchClientEvent(eventData);
+                
+                    eventData = {event: 'envDataUpdate', payload : {change: 'currentTemp', value :temp, unit: '°C', time: now.timeString}}
+                    eventData.clientId = message.clientId;
+                    dispatchClientEvent(eventData);
+                
+                    eventData = {event: 'envDataUpdate', payload : {change: 'currentAirQ', value :airQ,  unit: ' ', time: now.timeString}}
+                    eventData.clientId = message.clientId;
+                    dispatchClientEvent(eventData);
+                })
             }
         }
 
@@ -482,6 +499,159 @@ async function getNewsHeadlines(language) {
     })
 }
 
+
+async function getCurrentWeather() {
+    let promise = new Promise ((resolve, reject)=>{
+        const dataArray = loadFromFile(STORE_DATA);
+        //// If data is older than 30min  refresh from web
+        let lastWeather = dataArray.filter(e=> e.data =='weather').sort((a,b)=>{return (b.time-a.time)})[0];
+        //console.log(newestLog);
+        if (lastWeather!=undefined && ((Date.now()-lastWeather.time)/1000)<1800) {
+            resolve(lastWeather.payload);
+            return;
+        }
+
+        https = require('https');
+        const weatherCurrent = {
+            hostname: 'api.openweathermap.org',
+            port: 443,
+            path: '/data/2.5/weather?lat=25.076397664492344&lon=55.14301426227528&appid=36aed9a09e79e8a77621dd05efa307a4',
+            method: 'GET',
+        };
+
+        const req = https.request(weatherCurrent,res=>{
+            if (res.statusCode==200) {
+                res.on('data', d => { 
+                    ret= JSON.parse(d); 
+                    req.end(); 
+                    let weather = { desc: capitalize(ret.weather[0].description),
+                                    icon: ret.weather[0].icon,
+                                    temp: Math.round(ret.main.temp -273.15,2), 
+                                    tempMin: Math.round(ret.main.temp_min-273.15,2),
+                                    tempMax: Math.round(ret.main.temp_max-273.15,2),
+                                    feelsLike : Math.round(ret.main.feels_like-273.15,2),
+                                    humidity: ret.main.humidity,
+                                    pressure : ret.main.pressure,
+                                    wind : ret.wind,
+                                    visibility : ret.visibility, 
+                                    city: ret.name
+                                    }
+                    //console.log(weather);
+                    resolve(weather);
+                    let storeData = { data: 'weather', time : Date.now() }
+                    storeData.payload = weather
+                    saveToFile(storeData,STORE_DATA);
+                    // smarthomeDB.run('INSERT INTO weatherData VALUES($time, $desc, $icon, $temp, $tempMin, $tempMax, $feelsLike, $humidity, $pressure, $windSpeed, $windDeg, $windGust, $visibility, $city)',
+                    // {
+                    //     $time: Date.now(),
+                    //     $desc: weather.desc,
+                    //     $icon: weather.icon,
+                    //     $temp: weather.temp,
+                    //     $tempMin: weather.tempMin,
+                    //     $tempMax: weather.tempMax,
+                    //     $feelsLike: weather.feelsLike, 
+                    //     $humidity: weather.humidity, 
+                    //     $pressure: weather.pressure,
+                    //     $windSpeed: weather.wind.speed,
+                    //     $windDeg: weather.wind.deg,
+                    //     $windGust: weather.wind.gust,
+                    //     $visibility: weather.visibility,
+                    //     $city: weather.city
+                    // })
+                    req.end();
+                 })
+            }
+        })
+
+        req.on('error',error =>{
+            console.error(error);
+            reject(error);
+        })
+        
+        req.end();
+        https = undefined;
+    })
+    
+    return promise;
+}
+
+async function getWeatherForecast() {
+    return promise = new Promise((resolve,reject)=>{
+    const weatherForecast = {
+        hostname: 'api.openweathermap.org',
+        port: 443,
+        path: '/data/2.5/forecast?lat=25.076397664492344&lon=55.14301426227528&appid=36aed9a09e79e8a77621dd05efa307a4',
+        method: 'GET',
+    };
+    
+    https = require('https');
+    const req = https.request(weatherForecast,response);
+
+    function response(res){
+        if (res.statusCode==200) {
+            res.on('data', d => { 
+                ret= JSON.parse(d); 
+                resolve(ret) 
+            })
+        }
+    }
+
+    req.on('error',error =>{
+        console.error(error);
+        reject(error);
+    })
+    
+    req.end();
+    })
+    
+}
+
+
+function saveToFile(data, file) {
+    fs.appendFile(file, JSON.stringify(data)+'\n', err => {
+        if (err) {
+            console.error('Can not write to file.');
+            console.error(err);
+            return 1;
+        }
+    })
+    return 0;
+}
+
+function loadFromFile(file) {
+    if (!fs.existsSync(file)) return [];
+    let dataArray = fs.readFileSync(file,'utf8').split('\n');
+    dataArray.splice(dataArray.length-1,1);
+    let retArray = [];
+    for (let dataLine of dataArray) retArray.push(JSON.parse(dataLine));
+    return retArray;    
+}
+
+function getDate() {
+    let now = new Date();
+    let ret=new Object();
+
+    ret.day = pad(now.getDate(),2,'0');
+    ret.month = pad(now.getMonth()+1,2,'0');
+    ret.year = now.getFullYear();
+    ret.dateString = now.toDateString(ret.day + '/' +ret.month + '/' + ret.year);
+    ret.hour = now.getHours();
+    ret.min = now.getMinutes();
+    ret.sec = now.getSeconds();
+    ret.timeOffset = now.getTimezoneOffset();
+    ret.time = now.getTime();
+    ret.timeString = pad(ret.hour,2,'0')+':'+pad(ret.min,2,'0')+':'+pad(ret.sec,2,'0');
+    
+    return ret;
+}
+
+function pad(text,length,pad) {
+    return (length>text.toString().length)? pad.repeat(length-text.toString().length) + text : text;
+}
+
+function  capitalize(text) {    
+    return text[0].toUpperCase() + text.substring(1);
+}
 
 // getUserByEmail('ismail').then((res)=>console.log(res)).catch((err)=>console.error(err));
 // createNewUser({email:'ismail.ataman@gmail.com', password:'te3294', displayName:'Ismail'}).then((r)=>console.log(r)).catch(e=>console.error(e))

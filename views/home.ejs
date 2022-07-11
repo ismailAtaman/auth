@@ -6,16 +6,28 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=100vw, initial-scale=1.0">
     <link rel="stylesheet" href="../auth.css">
-    <link rel="stylesheet" href="../members.css">
+    <link rel="stylesheet" href="../home.css">
+    <script src="../home.js"></script>
     <title>ntx/rx - members home</title>
 </head>
 
 <body>
     <%- include('_header_members.ejs') %>
     <div class="title">Home</div>
-    <h1>Hello! </h1>
     <br>
-    <div>Welcome home!</div>   
+    <div id="currentContainer">
+        <div><img src="../img/temp.png" alt="temperature" class="icon"> <span id="currentTemp" class="current temp">0</span></div>
+        <div><img src="../img/humidity.png" alt="humidity" class="icon"> <span id="currentHum" class="current hum">0</span></div>
+        <div><img src="../img/air.png" alt="air quality" class="icon"> <span id="currentAirQ" class="current airQ">0</span></div>
+    </div>
+    <br>
+    <div class="weatherContainer">
+        <img id="weatherIcon" src="#" alt=""/>
+        <span class="weatherDesc" id="weatherDesc"></span>
+    </div>
+    <br>
+
+    <%- include('exchangeRate.ejs') %>
     <br>
 </body>
 </html>
