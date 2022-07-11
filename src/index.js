@@ -87,8 +87,44 @@ app.post('/auth',(req,res)=>{
             req.body[obj.substring(0,eqPos)]=obj.substring(eqPos+1);
         }
         //console.log(req.body)
-        let user = {email: req.body.email.toLowerCase(), password:req.body.password}
+        let user;
+        if (req.body && req.body.email && req.body.password) {
+            user = {email: req.body.email.toLowerCase(), password:req.body.password}
+        } else {
+            res.status(403).end('Not authorized.');
+            return;
+        }
 
+        validateUser(user).then(valid=>{
+            if (valid) {
+                let token = jwt.sign({user: user.email},ACCESS_TOKEN,{expiresIn: 60*60});
+                let cookieOptions = {
+                    expires:new Date(Date.now()+60*60*100),
+                    httpOnly: true,
+                }
+                res.status(200).clearCookie('auth').cookie('auth',{token:token},cookieOptions).redirect(302,'/members')
+            } else {
+                res.status(403).end('Not authorized.')
+            }
+    
+        }).catch(e=>console.log(e))
+    })
+})
+
+app.post('/authAPI',(req,res)=>{        
+    let data=[];
+    req.on('data',(chunk)=>{
+        data.push(chunk)
+    }).on('end',()=>{
+        data = JSON.parse(decodeURIComponent(data.concat().toString()));
+        //console.log("Data : ",data)
+        let user;
+        if (data.email && data.password) {
+            user = {email: data.email.toLowerCase(), password:data.password}
+        } else {
+            res.status(403).end('Not authorized.');
+            return;
+        }
         validateUser(user).then(valid=>{
             if (valid) {
                 let token = jwt.sign({user: user.email},ACCESS_TOKEN,{expiresIn: 60*60});
@@ -113,7 +149,8 @@ app.post('/action',processAction);
 app.get('/exchange',(req,res)=>{ 
     smarthomeDB.get('SELECT * FROM currentRate',(err,result)=>{        
         let rates = result;
-        db.get('SELECT * FROM exchangeRateChange',(err,result)=>{
+        smarthomeDB.get('SELECT * FROM exchangeRateChange',(err,result)=>{
+            if (err) console.log(err)
             let change = result;
             let ret = new Object();
             ret.rates= rates;
@@ -356,9 +393,10 @@ async function processAction(request, response, next) {
 
         if (message.device == 'purifier') {
             if (message.command == 'getEnvData') {
+                console.log("getEnvData")
                 const data = `data: {}\n\n`;
                 smarthomeDB.get('SELECT * FROM latestEnv',(err,result)=>{
-                    if (err) return;
+                    if (err) { console.log(err); return }
                     //console.log(result);
                     let hum = result.hum;
                     let temp = result.temp;
@@ -391,7 +429,7 @@ async function processAction(request, response, next) {
                 // let SQLQuery = (message.scope='day')?  "SELECT * FROM envData "+message.whereClause : "SELECT * FROM avgDaily "+message.whereClause ;
                 let SQLQuery = "SELECT * FROM envData "+message.whereClause;
                 // console.log(SQLQuery);
-                db.all(SQLQuery,(err,data)=>{
+                smarthomeDB.all(SQLQuery,(err,data)=>{
                     let eventData = {event: 'serverData', action: message.action, payload : data}
                     eventData.clientId = message.clientId;
                     dispatchClientEvent(eventData);
@@ -401,7 +439,7 @@ async function processAction(request, response, next) {
             if (message.command == 'runQuery') {                
                 let SQLQuery = message.SQLQuery;
                 //console.log(SQLQuery)
-                db.all(SQLQuery,(err,data)=>{
+                smarthomeDB.all(SQLQuery,(err,data)=>{
                     let eventData = {event: 'serverData', action: message.action, payload : data}
                     eventData.clientId = message.clientId;
                     dispatchClientEvent(eventData);
@@ -442,7 +480,6 @@ async function processAction(request, response, next) {
     response.end();
     next();
 }
-
 
 async function sendHTTPRequest(options, headers, data) {
     const http = require("https");
@@ -498,7 +535,6 @@ async function getNewsHeadlines(language) {
         resolve(JSON.parse(news.toString()).articles) ;  
     })
 }
-
 
 async function getCurrentWeather() {
     let promise = new Promise ((resolve, reject)=>{
@@ -605,7 +641,6 @@ async function getWeatherForecast() {
     })
     
 }
-
 
 function saveToFile(data, file) {
     fs.appendFile(file, JSON.stringify(data)+'\n', err => {

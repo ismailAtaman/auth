@@ -1,0 +1,98 @@
+
+
+:root {
+    --c-hue: 140;
+    --c-sat: 0%;
+}
+
+.grid {
+    display: grid;
+}
+
+.cols-2 {
+    grid-template-columns: repeat(2,1fr);
+}
+
+.cols-3 {
+    grid-template-columns: repeat(3,1fr);
+}
+
+.gap-2rem {
+    gap: 2rem;
+}
+
+.stats {
+    margin: 1rem;
+    padding: 1rem;
+    border: 1px solid hsl(var(--c-hue), var(--c-sat), 70%);
+    background-color: hsl(var(--c-hue), var(--c-sat), 15%);
+    border-radius: 0.4rem;
+    width: min(max-content, 90vw);
+}
+
+.stats > div {
+    margin:0;
+}
+
+.statsTitle {
+    font-size: 0.9rem; 
+    border-bottom: 1px solid white;
+    margin-bottom: 0.5rem;
+}
+
+.statsData {
+    font-size: 0.8rem;
+}
+
+.statsData > span {
+    padding-right: 1rem;
+}
+
+.graphOptions {
+    margin: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(5rem,1fr));
+    gap: 0.5rem;
+}
+
+.dataOptionsButton {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background-color: hsl(var(--c-hue), var(--c-sat), 30%);
+    border-radius: 0.4rem;
+    font-size: 0.8rem;
+    width: 5rem;
+    height: 3rem;
+    cursor: pointer;
+}
+
+.dataOptionsButton:active {
+    background-color: hsl(calc(var(--c-hue) + 180), var(--c-sat), 35%);
+}
+
+.dataOptionsButton.selected {
+    background-color: hsl(calc(var(--c-hue) + 180), var(--c-sat), 40%);
+}
+
+
+canvas {
+    max-width: 90%;
+    display: inline;
+    background-color: hsl(var(--c-hue), var(--c-sat), 70%);
+    margin: 1rem;
+    border-radius: 0.4rem;
+    display: none;
+}
+
+#dataTable {
+    font-size: 0.8rem;
+}
+
+.title {
+    position: absolute;
+    top: 1rem;
+    left:2rem;
+    font-size: 1.75rem;    
+}
+

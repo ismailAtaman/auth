@@ -13,7 +13,7 @@ window.addEventListener('load',()=>{
     const serverEvents = new EventSource('/events');
     serverEvents.addEventListener('message',(event)=>{
         let data = JSON.parse(event.data);
-        //console.log(data);
+        console.log(data);
         if (data.event==undefined) return;
         let action;
         switch (data.event) {
