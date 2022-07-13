@@ -161,9 +161,6 @@ app.get('/exchange',(req,res)=>{
     })
  });
 
-// app.use(fileUpload());
-// app.post('/upload',processUpload);
-
 
 let ACCESS_TOKEN, REFRESH_TOKEN;
 db.all('SELECT * FROM tokens',(err,res)=>{
