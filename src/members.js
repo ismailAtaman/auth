@@ -101,7 +101,7 @@ router.post('/data',(req,res)=>{
                     )             
                     smarthomeDB.run(SQLQuery,mutRec, (err)=>{
                         console.error("Error executing SQL query")
-                        console.err(err);
+                        console.error(err);
                     })
                 }                
                 res.status(200);       
