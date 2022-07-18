@@ -69,7 +69,15 @@ router.post('/data',(req,res)=>{
     req.on('data',(chunk)=>{
         data.push(chunk)
     }).on('end',()=>{
-        data = JSON.parse(decodeURIComponent(data.concat().toString()));
+        try {
+            data = JSON.parse(decodeURIComponent(data.concat().toString().replace(' ',' ').trim()));
+        }   
+        catch (e) {
+            console.error("Invalid data\n",data);
+            res.status(400).end();
+            return;
+        }
+
         // console.log("Command: " , data.command);       
         switch (data.command) {
             case 'maxRowId':                
@@ -99,7 +107,10 @@ router.post('/data',(req,res)=>{
                           [`$${key}`, value]
                         )
                     )             
-                    smarthomeDB.run(SQLQuery,mutRec)
+                    smarthomeDB.run(SQLQuery,mutRec,(err)=>{
+                        console.log("SQL Query Execution Error");
+                        console.error(err);
+                    })
                 }                
                 res.status(200);       
                 res.end();
