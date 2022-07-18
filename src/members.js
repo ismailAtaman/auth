@@ -64,7 +64,15 @@ router.post('/data',(req,res)=>{
         data.push(chunk)
     }).on('end',()=>{
         // clear tab characters from string and trim
-        data = JSON.parse(decodeURIComponent(data.concat().toString().replace(' ',' ').trim()));
+        try {
+            data = JSON.parse(decodeURIComponent(data.concat().toString().replace(' ',' ').trim()));
+        }
+        catch(err) {
+            console.error("Invalid data received\n",err);
+            res.status(400).end();
+            return;
+        }
+
         // console.log("Command: " , data.command);       
         switch (data.command) {
             case 'maxRowId':                
