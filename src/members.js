@@ -3,16 +3,10 @@ const express = require('express');
 const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
 const smarthomeDB = new sqlite3.Database('./smarthome.db');
-
-router.use(express.static('public'));
-
-// const sqlite3 = require('sqlite3').verbose();
-// const db = new sqlite3.Database('./data/auth.db');
 const jwt = require('jsonwebtoken');
 
-
+router.use(express.static('public'));
 router.use(verifyToken)
-
 
 router.get('/',(req,res)=>{
     res.render('home', {user: req.user})
@@ -69,15 +63,8 @@ router.post('/data',(req,res)=>{
     req.on('data',(chunk)=>{
         data.push(chunk)
     }).on('end',()=>{
-        try {
-            data = JSON.parse(decodeURIComponent(data.concat().toString().replace(' ',' ').trim()));
-        }   
-        catch (e) {
-            console.error("Invalid data\n",data);
-            res.status(400).end();
-            return;
-        }
-
+        // clear tab characters from string and trim
+        data = JSON.parse(decodeURIComponent(data.concat().toString().replace(' ',' ').trim()));
         // console.log("Command: " , data.command);       
         switch (data.command) {
             case 'maxRowId':                
@@ -95,20 +82,25 @@ router.post('/data',(req,res)=>{
 
                 if (data.payload.length==0) break;
 
-                let SQLQuery= 'INSERT INTO '+data.table+' VALUES('
+                let SQLQuery= 'INSERT INTO '+data.table+' ('
+                for (let col of Object.keys(data.payload[0])) {
+                    SQLQuery +=col+', ';
+                }
+                SQLQuery=SQLQuery.substring(0,SQLQuery.length-2)+') VALUES (';
                 for (let col of Object.keys(data.payload[0])) {
                     SQLQuery +='$'+col+', ';
                 }
                 SQLQuery=SQLQuery.substring(0,SQLQuery.length-2)+')';
                 console.log(SQLQuery);
+
                 for (let rec of data.payload) {                   
                     const mutRec = Object.fromEntries(
                         Object.entries(rec).map(([key, value]) =>                           
                           [`$${key}`, value]
                         )
                     )             
-                    smarthomeDB.run(SQLQuery,mutRec,(err)=>{
-                        console.log("SQL Query Execution Error");
+                    smarthomeDB.run(SQLQuery,mutRec, (err)=>{
+                        console.error("Error executing SQL query")
                         console.error(err);
                     })
                 }                
