@@ -60,15 +60,17 @@ router.get('/data',(req,res)=>{
 
 router.post('/data',(req,res)=>{
     let data=[];
-    req.on('data',(chunk)=>{
-        data.push(chunk)
-    }).on('end',()=>{
+
+    req.on('data',(chunk)=>{data.push(chunk);})
+    req.on('end',()=>{
+        
         // clear tab characters from string and trim
-        try {
-            data = JSON.parse(decodeURIComponent(data.concat().toString().replace(' ',' ').trim()));
+        try {            
+            data = Buffer.concat(data).toString().replace(/[\r\n\t]/g, "");
+            data = JSON.parse(data);
         }
         catch(err) {
-            console.error("Invalid data received\n",err);
+            console.error("Invalid data received\n",err);            
             res.status(400).end();
             return;
         }
@@ -99,7 +101,7 @@ router.post('/data',(req,res)=>{
                     SQLQuery +='$'+col+', ';
                 }
                 SQLQuery=SQLQuery.substring(0,SQLQuery.length-2)+')';
-                console.log(SQLQuery);
+                // console.log(SQLQuery);
 
                 for (let rec of data.payload) {                   
                     const mutRec = Object.fromEntries(
@@ -107,12 +109,10 @@ router.post('/data',(req,res)=>{
                           [`$${key}`, value]
                         )
                     )             
-                    smarthomeDB.run(SQLQuery,mutRec, (err)=>{
+                    smarthomeDB.run(SQLQuery, mutRec, function (err){
                         if (err) {
                             console.error("Error executing SQL query")
                             console.error(err);
-                        } else {
-                            console.log(this.changes," rows inserted.")
                         }
                     })
                 }                
