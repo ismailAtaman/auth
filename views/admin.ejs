@@ -13,26 +13,25 @@
             --c-sat: 0%;
         }
 
-        .commands  {
+        .adminPanel {
             display: grid;
-            grid-template-columns: repeat(auto-fill,minmax(6rem,1fr));
-            gap: 0.8rem;
-            margin: 1rem;
+            grid-template-columns: repeat(auto-fill,minmax(8rem, 1fr));
+            gap: 1rem;
+            margin:1rem;
         }
 
-        .command {
-            cursor: pointer;
-            width: 6 rem;
-            font-size: 0.9rem;
+        .adminButton {
+            display: inline-flex;
+            font-size: 0.8rem;
             background-color:hsl(var(--c-hue), var(--c-sat), 25%);
-            border-radius: 0.4rem;
-            padding: 0.3rem;
+            border-radius: 0.3rem;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            margin-inline: 0.2rem;
-        }
-
-        .command:hover {
-            background-color:hsl(calc(var(--c-hue) - 30), calc( var(--c-sat) + 15%), 50%);
+            min-height: 3rem;
+            cursor: pointer;
+            user-select: none;
+            padding: 0.3rem;
         }
         
     </style>
@@ -41,15 +40,21 @@
 </head>
 <body>
     <%- include('_header_members.ejs') %>
-    <div class="commands">
-        <div class="command" action="pullData">Pull Data</div>
+    <div class="adminPanel">
+        <span class="adminButton" action="updateExchangeRate">Update Exchange Rate</span>
+        <span class="adminButton" action="updateEnvData">Update Env Data</span>
+        <span class="adminButton" action="updateCurrentWeather">Update Current Weather</span>
+        <span class="adminButton" action="forceDataUpload">Force Data Upload</span>
+
     </div>
 </body>
+
+
 <script>
 
 let clientId;
-window.addEventListener('load',()=>{
-    //// Subscribe to server events
+
+window.addEventListener('load',()=>{  
     const serverEvents = new EventSource('/events');
     serverEvents.addEventListener('message',(event)=>{
         let data = JSON.parse(event.data);
@@ -58,10 +63,24 @@ window.addEventListener('load',()=>{
         switch (data.event) {
             case 'register':
                 clientId = data.clientId;
+                break;              
         }
-    })
+        
+    });
+
+    for (let button of document.getElementsByClassName('adminButton')) {
+        button.addEventListener('click',()=>requestAction(button));
+    }    
 })
 
+function requestAction(button) {
+    const action = button.getAttribute('action');
+    
+    let dataObject= {device : 'server', command : 'runFunction', function: action};
+    postForm('/action',dataObject);
+}
+
+    
 function postForm(url, object) {
     object.clientId=clientId;
     fetch(url, {
@@ -69,5 +88,6 @@ function postForm(url, object) {
         body: encodeURIComponent(JSON.stringify(object)),
     })
 }
+
 </script>
 </html>
