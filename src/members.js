@@ -20,6 +20,10 @@ router.get('/news',(req,res)=>{
     res.render('news');
 })
 
+router.get('/admin',(req,res)=>{
+    res.render('admin');
+})
+
 router.get('/data',(req,res)=>{
     now = getDate()
     let sqlQuery = 'SELECT MAX(temp) maxTemp, MAX(hum) maxHum, MAX(airQ) maxAirQ FROM envData WHERE year = '+now.year+' AND month = '+parseInt(now.month).toString()+ ' AND ((day = '+(parseInt(now.day)-1).toString()+' AND time > "'+now.timeString+'") OR (day = '+now.day+' AND time < "'+now.timeString+'"))';

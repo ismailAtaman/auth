@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=100vw, initial-scale=1.0">
+    <link rel="stylesheet" href="../auth.css">
+    <title>ntx/rx - admin</title>
+    <style>
+            
+        :root {
+            --c-hue: 140;
+            --c-sat: 0%;
+        }
+
+        .commands  {
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(6rem,1fr));
+            gap: 0.8rem;
+            margin: 1rem;
+        }
+
+        .command {
+            cursor: pointer;
+            width: 6 rem;
+            font-size: 0.9rem;
+            background-color:hsl(var(--c-hue), var(--c-sat), 25%);
+            border-radius: 0.4rem;
+            padding: 0.3rem;
+            text-align: center;
+            margin-inline: 0.2rem;
+        }
+
+        .command:hover {
+            background-color:hsl(calc(var(--c-hue) - 30), calc( var(--c-sat) + 15%), 50%);
+        }
+        
+    </style>
+    
+
+</head>
+<body>
+    <%- include('_header_members.ejs') %>
+    <div class="commands">
+        <div class="command" action="pullData">Pull Data</div>
+    </div>
+</body>
+<script>
+
+let clientId;
+window.addEventListener('load',()=>{
+    //// Subscribe to server events
+    const serverEvents = new EventSource('/events');
+    serverEvents.addEventListener('message',(event)=>{
+        let data = JSON.parse(event.data);
+        console.log(data);
+        if (data.event==undefined) return;
+        switch (data.event) {
+            case 'register':
+                clientId = data.clientId;
+        }
+    })
+})
+
+function postForm(url, object) {
+    object.clientId=clientId;
+    fetch(url, {
+        method : "POST",
+        body: encodeURIComponent(JSON.stringify(object)),
+    })
+}
+</script>
+</html>

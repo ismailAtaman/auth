@@ -14,12 +14,23 @@ window.addEventListener('load',()=>{
                 for (let section of document.getElementsByClassName('section')) {
                     section.addEventListener('click',function(){
                         document.getElementById('news').innerText='Loading '+this.innerText+' news ...';
-                        let section= this.getAttribute('section'); 
+
+                        let category= this.getAttribute('section');
+                        let country= this.getAttribute('country');
+                        let language= this.getAttribute('language');
+
+                        // save the last visited section to local storage for later retrieval
+                         
                         let sectionIndex = [...document.getElementsByClassName('section')].indexOf(this)
                         window.localStorage.setItem('activeSection',sectionIndex);
+                        
+                        // Set the active class for selected section
                         for (let s of document.getElementsByClassName('section')) s.classList.remove('active');
                         this.classList.add('active');
-                        let dataObject={device:'server', command: 'getNews', section: section};
+                        
+                        // Request data from the server
+                        let dataObject={device:'server', command: 'getNews', category: category, country:country, language:language};
+                        console.log("Request sent\n",dataObject)
                         postForm('/action',dataObject); 
 
                     })

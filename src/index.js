@@ -216,82 +216,7 @@ async function validateUser(user) {
     return promise;
 }
 
-function verifyToken(req,res,next){
-    let decodedCookie = decodeURIComponent(req.headers.cookie);
-
-    if (decodedCookie==undefined || decodedCookie=='undefined') {
-        req.valid=false;
-        req.user=undefined;
-        next();
-        return;
-    }
-    let cookieObject = JSON.parse(decodedCookie.substring(decodedCookie.indexOf(':')+1))
-    //    console.log(cookieObject);
-    jwt.verify(cookieObject.token,ACCESS_TOKEN,(err,decoded)=>{
-        if (err) {
-            req.valid=false;
-            req.user=undefined;
-        } else {
-            req.valid=true;
-            req.user=decoded.user;
-        }
-    });
-    next();
-}
-
-async function processUpload(req, res, next) {
-  
-    if (req.files==undefined) { res.status(204).send('No file uploaded').end(); next(); return; }
-    if (req.files.uploadFile==undefined) { res.status(204).send('No file uploaded').end(); next(); return; }
-
-    let hostname =req.socket.remoteAddress.toString();
-    hostname = hostname.substring(hostname.indexOf('f:')+2);
-    let path = req.query.path;
-
-    if (req.files.uploadFile.length==undefined) {
-        let file = req.files.uploadFile;
-
-        let saveAs = file.name;
-        file.mv(UPLOAD_PATH+path+saveAs);
-        // db.run('INSERT INTO uploadLog VALUES ($hostName, $fileName, $fileSize, $savedAs, $logDate)',{
-        //     $hostName: hostname,
-        //     $fileName: file.name,
-        //     $fileSize: file.size,
-        //     $savedAs: saveAs,
-        //     $logDate: Date.now()
-        // })
-        res.status(200).send({status: 'success', files: 1, size: file.size})
-        next();
-        return;
-    }
-    
-    let size=0;
-    let count=1, saveAs;
-    for (let file of req.files.uploadFile) {        
-        size += file.size;    
-        // saveAs = Date.now()+'_'+file.name
-        saveAs = file.name;
-        file.mv(UPLOAD_PATH+path+saveAs);
- 
-        db.run('INSERT INTO uploadLog VALUES ($hostName, $fileName, $fileSize, $savedAs, $logDate)',{
-            $hostName: hostname,
-            $fileName: file.name,
-            $fileSize: file.size,
-            $savedAs: saveAs,
-            $logDate: Date.now()
-        })
-        res.write(`${count} / ${req.files.uploadFile.length} uploaded. [${Math.round(file.size/1024,1)}kB]\n\n`);
-        count++;
-    }
-    res.write(`Success! Total ${req.files.uploadFile.length} files uploaded. [${Math.round(size/1024,1)}kB]\n\n`)
-    res.end();
-    // res.status(200).send({status: 'success', files: req.files.uploadFile.length, size: size})
-    next();
-}
-
 ////////// Server Side Events Handling and Dispatch //////////
-
-
 
 function eventsHandler(req, res, next) {
     const headers = {
@@ -459,18 +384,14 @@ async function processAction(request, response, next) {
 
             if (message.command =='getNews') {
                 // console.log('getNews Request');
-                if (message.section=='tr') {
-                    const articles = await getNewsHeadlines(message.section);
-                    let eventData = {event: 'getNews', payload : {articles: articles}}
-                    eventData.clientId = message.clientId;
-                    dispatchClientEvent(eventData);
-                    return;
-                }
-
-                const articles = await getReutersArticles(message.section);
+                const articles = await getNewsHeadlines(message.category, message.language, message.country);
                 let eventData = {event: 'getNews', payload : {articles: articles}}
                 eventData.clientId = message.clientId;
-                dispatchClientEvent(eventData);
+                dispatchClientEvent(eventData);                
+            }
+
+            if (message.command == 'pullData') {
+
             }
         }
     })
@@ -519,19 +440,26 @@ async function getReutersArticles(section) {
     })
 }
 
-async function getNewsHeadlines(language) {    
-    if (language==undefined) language='en';
+async function getNewsHeadlines(category, language, country) {    
+        
+    // console.log("Country: ",country,"\tLanguage:",language,"\tCountry:",country) 
+    let path = '/v2/top-headlines?apiKey=8c7adb4f0c214330b796f027610e5eb4&category='+category;
+    if (language && language!="") path+='&language='+language;
+    if (country && country!="") path+='&country='+country;
+
+    // console.log(path)
     return new Promise(async (resolve,_reject)=>{
         let options = {
             host: 'newsapi.org',
             port: 443,
-            path: '/v2/top-headlines?language='+language+'&apiKey=8c7adb4f0c214330b796f027610e5eb4',
+            path: path,
             method: 'GET',
         };
         const news  = await sendHTTPRequest(options,undefined);
         resolve(JSON.parse(news.toString()).articles) ;  
     })
 }
+
 
 async function getCurrentWeather() {
     let promise = new Promise ((resolve, reject)=>{
